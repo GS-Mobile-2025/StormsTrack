@@ -4,6 +4,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import { Sensor } from '../types';
+import { API_URL } from '../types/config';
+
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -14,7 +16,7 @@ export default function HomeScreen({ navigation, route }: Props) {
   const [sensors, setSensors] = useState<Sensor[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:8080/sensors', {
+    fetch(`${API_URL}/sensors`, {
       headers: { Authorization: `Bearer ${route.params.token}` }
     })
       .then(res => res.json())

@@ -3,6 +3,7 @@ import { View, Text, FlatList } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import { SensorReading } from '../types';
+import { API_URL } from '../types/config';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'SensorDetails'>;
@@ -13,7 +14,7 @@ export default function SensorDetailsScreen({ route }: Props) {
   const [readings, setReadings] = useState<SensorReading[]>([]);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/sensor-readings/${sensor.id}`, {
+    fetch(`${API_URL}/sensor-readings/${sensor.id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
