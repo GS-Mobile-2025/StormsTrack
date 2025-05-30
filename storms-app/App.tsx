@@ -1,11 +1,11 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import SensorDetailsScreen from './screens/SensorDetailsScreen';
 import { Sensor } from './types';
-import { DefaultTheme, Theme } from '@react-navigation/native';
+import { StatusBar } from 'react-native';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -29,9 +29,10 @@ const DarkTheme: Theme = {
 
 export default function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={DarkTheme}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
       <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SensorDetails" component={SensorDetailsScreen} />
       </Stack.Navigator>
