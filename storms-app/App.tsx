@@ -5,7 +5,6 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import AlertScreen from './screens/AlertScreen';
 import SensorDetailsScreen from './screens/SensorDetailsScreen';
-import { Sensor } from './types/index';
 import { RootStackParamList } from './types/index';
 
 
