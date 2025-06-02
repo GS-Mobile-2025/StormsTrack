@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ImageBackground } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/index';
+import { API_URL } from '../types/config';
+import Register from '../screens/RegisterScreen'; 
 
 const backgroundImg = require('../assets/background-login.jpg');
 
@@ -15,7 +17,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://localhost:8080/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -26,13 +28,13 @@ export default function LoginScreen({ navigation }: Props) {
       const data = await response.json();
       navigation.navigate('Home', { token: data.token });
     } catch (error: any) {
-      Alert.alert('Falha no login', error.message);
+      Alert.alert('Erro no login', error.message);
     }
   };
 
   const handleRegister = async () => {
     try {
-      const response = await fetch('http://localhost:8080/users', {
+      const response = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -54,7 +56,7 @@ export default function LoginScreen({ navigation }: Props) {
         <TextInput placeholder="Senha" placeholderTextColor="#aaa" onChangeText={setPassword} secureTextEntry style={styles.input} />
         <Button title="Entrar" onPress={handleLogin} color="#1db954" />
         <View style={{ marginTop: 10 }}>
-          <Button title="Cadastrar" onPress={handleRegister} color="#5555ff" />
+          <Button title="Cadastrar" onPress={() => navigation.navigate('Register')} color="#5555ff" />
         </View>
       </View>
     </ImageBackground>
