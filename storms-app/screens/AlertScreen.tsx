@@ -1,47 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types/index'; 
-import { AlertData } from '../types/index';
-import { API_URL } from '../types/config';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 
-type HomeProps = {
-  route: RouteProp<RootStackParamList, 'Alert'>;
+type Alert = {
+  id: number;
+  message: string;
+  location: string;
+  level: string;
 };
 
-export default function HomeScreen({ route }: HomeProps) {
-  const [alerts, setAlerts] = useState<AlertData[]>([]);
-  const [loading, setLoading] = useState(true);
+type Props = {
+  token: string;
+};
+
+export default function AlertScreen({ token }: Props) {
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/alerts`, {
-      headers: { Authorization: `Bearer ${route.params.token}` }
-    })
-      .then(res => res.json())
-      .then(setAlerts)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    const fetchAlerts = async () => {
+      try {
+        const res = await fetch('http://192.168.0.105:8080/alerts', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-  if (loading) {
-    return (
-      <View style={styles.container}><ActivityIndicator size="large" color="#1db954" /></View>
-    );
-  }
+        const data = await res.json();
+        setAlerts(data);
+      } catch (err) {
+        console.error('Erro ao buscar alertas:', err);
+      }
+    };
+
+    fetchAlerts();
+  }, [token]);
+
+  const renderItem = ({ item }: { item: Alert }) => (
+    <View style={styles.card}>
+      <Text style={styles.title}>{item.location}</Text>
+      <Text style={styles.level}>Nível: {item.level}</Text>
+      <Text>{item.message}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🌡️ Alertas de Calor por Localização</Text>
+      <Text style={styles.header}>Alertas</Text>
       <FlatList
         data={alerts}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.location}>📍 {item.location}</Text>
-            <Text style={styles.message}>{item.message}</Text>
-            <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
-          </View>
-        )}
+        renderItem={renderItem}
       />
     </View>
   );
@@ -49,16 +56,13 @@ export default function HomeScreen({ route }: HomeProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', padding: 16 },
-  header: { fontSize: 22, fontWeight: 'bold', color: '#1db954', marginBottom: 20, textAlign: 'center' },
+  header: { fontSize: 24, color: '#1db954', marginBottom: 16, textAlign: 'center' },
   card: {
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#1a1a1a',
     padding: 16,
     borderRadius: 8,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1db954',
+    marginBottom: 12
   },
-  location: { color: '#fff', fontWeight: 'bold' },
-  message: { color: '#ffd700', marginTop: 4 },
-  timestamp: { color: '#aaa', marginTop: 6, fontSize: 12 },
+  title: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  level: { color: '#ccc', marginBottom: 4 }
 });
