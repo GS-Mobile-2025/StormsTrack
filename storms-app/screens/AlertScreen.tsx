@@ -18,14 +18,14 @@ export default function AlertScreen({ token }: Props) {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await fetch('http://192.168.0.105:8080/alerts', {
+        const res = await fetch('http://localhost:8080/alerts?pagina=0&item=10', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
 
         const data = await res.json();
-        setAlerts(data);
+        setAlerts(data.content); // <- pega apenas o conteúdo da página
       } catch (err) {
         console.error('Erro ao buscar alertas:', err);
       }
