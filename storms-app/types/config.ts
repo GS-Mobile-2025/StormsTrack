@@ -1,1 +1,1 @@
-export const API_URL = 'http://255.255.255.0:8080';
+export const API_URL = 'http://localhost:8080';
