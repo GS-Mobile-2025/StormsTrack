@@ -4,6 +4,13 @@ export interface SensorReading {
   value: string;
 }
 
+export type RootStackParamList = {
+  Login: undefined;
+  Home: { token: string };
+  Register: undefined;
+  SensorDetails: { sensor: Sensor; token: string };
+};
+
 export interface AlertData {
   id: number;
   location: string;
@@ -11,15 +18,10 @@ export interface AlertData {
   timestamp: string;
 }
 
-export type Sensor = {
+export interface Sensor {
   id: number;
   location: string;
-  active: boolean;
-};
+  temperature: number;
+  status: string;
+}
 
-export type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Home: { token: string };
-  SensorDetails: { sensor: Sensor; token: string };
-};
