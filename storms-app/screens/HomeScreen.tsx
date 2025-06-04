@@ -1,114 +1,109 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  TouchableOpacity
-} from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { RouteProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList, Sensor } from '../types';
-import AlertScreen from './AlertScreen';
 import { API_URL } from '../types/config';
+import { AlertData, Sensor, RootStackParamList } from '../types';
 
-type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-type HomeScreenRouteProp = RouteProp<RootStackParamList, 'Home'>;
+interface Props {
+  route: RouteProp<RootStackParamList, 'Home'>;
+}
 
-type Props = {
-  navigation: HomeScreenNavigationProp;
-  route: HomeScreenRouteProp;
-};
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
-export default function HomeScreen({ navigation, route }: Props) {
-  const { token } = route.params;
+export default function HomeScreen({ route }: Props) {
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [sensors, setSensors] = useState<Sensor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
-    const fetchSensors = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/sensors`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const [alertsRes, sensorsRes] = await Promise.all([
+          fetch(`${API_URL}/alerts`, {
+            headers: { Authorization: `Bearer ${route.params.token}` }
+          }),
+          fetch(`${API_URL}/sensors`, {
+            headers: { Authorization: `Bearer ${route.params.token}` }
+          })
+        ]);
 
-        const data = await response.json();
-        setSensors(data);
+        const alertsData = await alertsRes.json();
+        const sensorsData = await sensorsRes.json();
+
+        setAlerts(alertsData);
+        setSensors(sensorsData);
       } catch (error) {
-        console.error('Erro ao buscar sensores:', error);
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchSensors();
-  }, [token]);
+    fetchData();
+  }, []);
 
-  const renderSensor = ({ item }: { item: Sensor }) => (
-    <TouchableOpacity
-      style={styles.sensorCard}
-      onPress={() => navigation.navigate('SensorDetails', { sensor: item, token })}
-    >
-      <Text style={styles.sensorLocation}>📍 {item.location}</Text>
-      <Text style={styles.sensorStatus}>Status: {item.active ? 'Ativo' : 'Inativo'}</Text>
-    </TouchableOpacity>
-  );
+  if (loading) {
+    return (
+      <View style={styles.container}><ActivityIndicator size="large" color="#1db954" /></View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>StormsTrack - Monitoramento de Calor</Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>🌡️ Alertas de Calor</Text>
+      <FlatList
+        data={alerts}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Text style={styles.location}>📍 {item.location}</Text>
+            <Text style={styles.message}>{item.message}</Text>
+            <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
+          </View>
+        )}
+      />
 
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Alertas Recentes:</Text>
-        <AlertScreen token={token} />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Sensores Disponíveis:</Text>
-        <FlatList
-          data={sensors}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderSensor}
-        />
-      </View>
-    </ScrollView>
+      <Text style={styles.header}>📍 Sensores Ativos</Text>
+      <FlatList
+        data={sensors}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SensorDetails', { token: route.params.token, sensor: item })}
+            style={styles.sensorCard}>
+            <Text style={styles.location}>{item.location}</Text>
+            <Text style={styles.message}>Temperatura: {item.temperature}°C</Text>
+            <Text style={styles.status}>Status: {item.status}</Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    padding: 16
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1db954',
-    textAlign: 'center',
-    marginBottom: 16
-  },
-  section: {
-    marginBottom: 24
-  },
-  subTitle: {
-    fontSize: 18,
-    color: '#fff',
-    marginBottom: 8
+  container: { flex: 1, backgroundColor: '#000', padding: 16 },
+  header: { fontSize: 22, fontWeight: 'bold', color: '#1db954', marginVertical: 16, textAlign: 'center' },
+  card: {
+    backgroundColor: '#1c1c1c',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1db954',
   },
   sensorCard: {
-    backgroundColor: '#1a1a1a',
-    padding: 12,
+    backgroundColor: '#222',
+    padding: 16,
     borderRadius: 8,
-    marginBottom: 10
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#00bfff',
   },
-  sensorLocation: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  sensorStatus: {
-    color: '#ccc',
-    fontSize: 14
-  }
+  location: { color: '#fff', fontWeight: 'bold' },
+  message: { color: '#ffd700', marginTop: 4 },
+  status: { color: '#aaa', marginTop: 6 },
+  timestamp: { color: '#aaa', marginTop: 6, fontSize: 12 },
 });
