@@ -1,84 +1,52 @@
+// screens/RegisterScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
 import { API_URL } from '../types/config';
 
-export default function RegisterScreen() {
-  const [email, setEmail] = useState('');
+type Props = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
+};
+
+export default function RegisterScreen({ navigation }: Props) {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'USER' | 'ADMIN'>('USER');
 
   const handleRegister = async () => {
-    if (!email || !password || !role) {
-      Alert.alert('Erro', 'Preencha todos os campos.');
-      return;
-    }
-
-    if (!email.includes('@')) {
-      Alert.alert('Erro', 'Email inválido.');
-      return;
-    }
-
-    if (password.length < 5) {
-      Alert.alert('Erro', 'A senha deve ter no mínimo 5 caracteres.');
-      return;
-    }
-
     try {
       const response = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role })
+        body: JSON.stringify({ username, password })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Erro ao cadastrar.');
-      }
+      if (!response.ok) throw new Error('Erro ao cadastrar');
 
-      Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
-      setEmail('');
-      setPassword('');
-      setRole('USER');
+      Alert.alert('Cadastro realizado com sucesso!');
+      navigation.navigate('Login');
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      Alert.alert('Erro no cadastro', error.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Usuário</Text>
-
+      <Text style={styles.title}>Cadastrar</Text>
       <TextInput
-        placeholder="Email"
+        placeholder="Usuário"
         placeholderTextColor="#aaa"
+        onChangeText={setUsername}
         style={styles.input}
-        onChangeText={setEmail}
-        value={email}
-        keyboardType="email-address"
       />
-
       <TextInput
-        placeholder="Senha (mín. 5 caracteres)"
+        placeholder="Senha"
         placeholderTextColor="#aaa"
-        style={styles.input}
         onChangeText={setPassword}
-        value={password}
         secureTextEntry
+        style={styles.input}
       />
-
-      <Text style={styles.label}>Função:</Text>
-      <Picker
-        selectedValue={role}
-        onValueChange={(itemValue) => setRole(itemValue)}
-        style={styles.picker}
-        dropdownIconColor="#1db954"
-      >
-        <Picker.Item label="Usuário Comum" value="USER" />
-        <Picker.Item label="Administrador" value="ADMIN" />
-      </Picker>
-
-      <Button title="Cadastrar" onPress={handleRegister} color="#1db954" />
+      <Button title="Registrar" onPress={handleRegister} color="#1db954" />
     </View>
   );
 }
@@ -88,14 +56,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     justifyContent: 'center',
-    padding: 20
+    padding: 20,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1db954',
+    color: '#fff',
+    textAlign: 'center',
     marginBottom: 24,
-    textAlign: 'center'
   },
   input: {
     borderWidth: 1,
@@ -104,18 +72,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 10,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  label: {
-    color: '#aaa',
-    marginTop: 10,
-    marginBottom: 4,
-    fontSize: 16
-  },
-  picker: {
-    backgroundColor: '#1c1c1c',
-    color: '#fff',
-    marginBottom: 16,
-    borderRadius: 6
-  }
 });
