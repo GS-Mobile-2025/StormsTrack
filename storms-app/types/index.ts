@@ -1,7 +1,7 @@
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  Home: { token: string };
+  Home: undefined;
   SensorDetails: { token: string; sensor: Sensor };
   SensorForm: { token: string; sensor?: Sensor };
   AlertForm: { token: string; alert?: AlertData };
