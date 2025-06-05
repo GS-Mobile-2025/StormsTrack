@@ -8,11 +8,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
-import { API_URL } from '../types/config';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
@@ -30,39 +30,40 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, location })
-      });
+      const usersRaw = await AsyncStorage.getItem('users');
+      const users = usersRaw ? JSON.parse(usersRaw) : [];
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text);
+      const userExists = users.some((user: any) => user.username === username);
+      if (userExists) {
+        Alert.alert('Erro', 'Usuário já existe!');
+        return;
       }
 
-      Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+      users.push({ username, password, location });
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+
+      Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
       navigation.navigate('Login');
-    } catch (error: any) {
-      Alert.alert('Erro no cadastro', error.message || 'Erro inesperado');
+    } catch (error) {
+      Alert.alert('Erro', 'Erro ao registrar usuário.');
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
       <ScrollView contentContainerStyle={styles.inner}>
-        <Text style={styles.title}>Cadastro</Text>
-
+        <Text style={styles.title}>Registrar</Text>
         <TextInput
-          placeholder="Nome de usuário"
-          placeholderTextColor="#aaa"
+          placeholder="Usuário"
           style={styles.input}
           value={username}
           onChangeText={setUsername}
         />
         <TextInput
           placeholder="Senha"
-          placeholderTextColor="#aaa"
           secureTextEntry
           style={styles.input}
           value={password}
@@ -70,41 +71,34 @@ export default function RegisterScreen({ navigation }: Props) {
         />
         <TextInput
           placeholder="Localização"
-          placeholderTextColor="#aaa"
           style={styles.input}
           value={location}
           onChangeText={setLocation}
         />
-
-        <Button title="Cadastrar" onPress={handleRegister} color="#1db954" />
-        <View style={{ marginTop: 10 }}>
-          <Button title="Voltar ao login" onPress={() => navigation.navigate('Login')} color="#888" />
-        </View>
+        <Button title="Registrar" onPress={handleRegister} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: {
+    flex: 1,
+  },
   inner: {
-    flexGrow: 1,
+    padding: 24,
     justifyContent: 'center',
-    padding: 24
   },
   title: {
-    fontSize: 28,
-    color: '#1db954',
+    fontSize: 24,
+    marginBottom: 24,
     textAlign: 'center',
-    marginBottom: 24
   },
   input: {
     borderWidth: 1,
-    borderColor: '#333',
-    color: '#fff',
-    backgroundColor: '#111',
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 8
-  }
+    borderColor: '#ccc',
+    marginBottom: 12,
+    padding: 8,
+    borderRadius: 4,
+  },
 });
