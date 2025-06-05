@@ -1,109 +1,135 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList, Sensor } from '../types';
 import { API_URL } from '../types/config';
-import { AlertData, Sensor, RootStackParamList } from '../types';
 
-interface Props {
+type Props = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
   route: RouteProp<RootStackParamList, 'Home'>;
-}
+};
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-
-export default function HomeScreen({ route }: Props) {
-  const [alerts, setAlerts] = useState<AlertData[]>([]);
+export default function HomeScreen({ navigation, route }: Props) {
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation<NavigationProp>();
+
+  const token = route.params.token;
+
+  const fetchSensors = async () => {
+    try {
+      const response = await fetch(`${API_URL}/sensor`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar sensores');
+      }
+
+      const data = await response.json();
+      setSensors(data);
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [alertsRes, sensorsRes] = await Promise.all([
-          fetch(`${API_URL}/alerts`, {
-            headers: { Authorization: `Bearer ${route.params.token}` }
-          }),
-          fetch(`${API_URL}/sensors`, {
-            headers: { Authorization: `Bearer ${route.params.token}` }
-          })
-        ]);
-
-        const alertsData = await alertsRes.json();
-        const sensorsData = await sensorsRes.json();
-
-        setAlerts(alertsData);
-        setSensors(sensorsData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchSensors();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.container}><ActivityIndicator size="large" color="#1db954" /></View>
-    );
-  }
+  const renderItem = ({ item }: { item: Sensor }) => (
+    <TouchableOpacity
+      style={styles.sensorCard}
+      onPress={() => navigation.navigate('SensorDetails', { sensor: item, token })}
+    >
+      <Text style={styles.location}>📍 {item.location}</Text>
+      <Text style={styles.temp}>🌡️ Temperatura: {item.temperature.toFixed(1)}°C</Text>
+      <Text style={styles.status}>
+        ⚠️ Alerta: {item.active ? 'Ativado' : 'Desativado'}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🌡️ Alertas de Calor</Text>
-      <FlatList
-        data={alerts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.location}>📍 {item.location}</Text>
-            <Text style={styles.message}>{item.message}</Text>
-            <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
-          </View>
-        )}
-      />
+      <Text style={styles.title}>Sensores de Calor Registrados</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#1db954" />
+      ) : (
+        <FlatList
+          data={sensors}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
 
-      <Text style={styles.header}>📍 Sensores Ativos</Text>
-      <FlatList
-        data={sensors}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SensorDetails', { token: route.params.token, sensor: item })}
-            style={styles.sensorCard}>
-            <Text style={styles.location}>{item.location}</Text>
-            <Text style={styles.message}>Temperatura: {item.temperature}°C</Text>
-            <Text style={styles.status}>Status: {item.status}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.alertButton}
+          onPress={() => navigation.navigate('AlertForm', { token })}
+        >
+          <Text style={styles.buttonText}>Ver Alertas 🔥</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.registerButton}
+          onPress={() => navigation.navigate('Register')}
+        >
+          <Text style={styles.buttonText}>Cadastrar Usuário ➕</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', padding: 16 },
-  header: { fontSize: 22, fontWeight: 'bold', color: '#1db954', marginVertical: 16, textAlign: 'center' },
-  card: {
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1db954',
+    textAlign: 'center',
+    marginBottom: 12
+  },
+  sensorCard: {
     backgroundColor: '#1c1c1c',
     padding: 16,
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#1db954',
+    borderLeftColor: '#1db954'
   },
-  sensorCard: {
-    backgroundColor: '#222',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00bfff',
-  },
-  location: { color: '#fff', fontWeight: 'bold' },
-  message: { color: '#ffd700', marginTop: 4 },
+  location: { color: '#fff', fontSize: 16 },
+  temp: { color: '#ffd700', marginTop: 4 },
   status: { color: '#aaa', marginTop: 6 },
-  timestamp: { color: '#aaa', marginTop: 6, fontSize: 12 },
+  buttonContainer: { marginTop: 16 },
+  alertButton: {
+    backgroundColor: '#ff3333',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10
+  },
+  registerButton: {
+    backgroundColor: '#5555ff',
+    padding: 12,
+    borderRadius: 8
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold'
+  }
 });
