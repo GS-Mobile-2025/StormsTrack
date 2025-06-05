@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ImageBackground } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  ImageBackground,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/index';
-import { API_URL } from '../types/config';
 
-const backgroundImg = require('../assets/background-login.jpg'); 
+const backgroundImg = require('../assets/background-login.jpg');
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -15,67 +25,111 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (!response.ok) throw new Error('Usuário ou senha inválidos');
-
-      const data = await response.json();
-      navigation.navigate('Home', { token: data.token });
-    } catch (error: any) {
-      Alert.alert('Falha no login', error.message);
+    if (!username || !password) {
+      Alert.alert('Erro', 'Preencha todos os campos!');
+      return;
     }
-  };
 
-  const handleRegister = async () => {
     try {
-      const response = await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      const usersRaw = await AsyncStorage.getItem('users');
+      const users = usersRaw ? JSON.parse(usersRaw) : [];
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
+      const user = users.find(
+        (u: any) => u.username === username && u.password === password
+      );
+
+      if (!user) {
+        Alert.alert('Erro', 'Usuário ou senha inválidos!');
+        return;
       }
 
-      Alert.alert('Cadastro realizado com sucesso!');
-    } catch (error: any) {
-      Alert.alert('Erro no cadastro', error.message);
+      // Salvar sessão
+      await AsyncStorage.setItem('loggedInUser', JSON.stringify(user));
+      navigation.navigate('Home'); 
+    } catch (error) {
+      Alert.alert('Erro', 'Erro ao realizar login.');
     }
   };
 
   return (
-    <ImageBackground source={backgroundImg} style={styles.background} resizeMode="cover">
-      <View style={styles.overlay}>
-        <Text style={styles.title}>StormStrack</Text>
-        <TextInput placeholder="Usuário" placeholderTextColor="#aaa" onChangeText={setUsername} style={styles.input} />
-        <TextInput placeholder="Senha" placeholderTextColor="#aaa" onChangeText={setPassword} secureTextEntry style={styles.input} />
-        <Button title="Entrar" onPress={handleLogin} color="#1db954" />
-        <View style={{ marginTop: 10 }}>
-          <Button title="Cadastrar" onPress={handleRegister} color="#5555ff" />
+    <ImageBackground source={backgroundImg} style={styles.background}>
+      <View style={styles.container}>
+        <Text style={styles.title}>StormsTrack</Text>
+        <TextInput
+          placeholder="Email"
+          style={styles.input}
+          value={username}
+          onChangeText={setUsername}
+        />
+        <TextInput
+          placeholder="Senha"
+          secureTextEntry
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity 
+        style={styles.btlogin} onPress={handleLogin}
+        > <Text style={styles.logtext}>Entrar</Text>
+        </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => navigation.navigate('Register')}> 
+        <View>
+        <Text style={styles.cad} > Não tem conta? Cadastre-se aqui!</Text>
         </View>
+        </TouchableWithoutFeedback>
       </View>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, justifyContent: 'center' },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#fff', textAlign: 'center', marginBottom: 24 },
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
+  container: {
+    padding: 24,
+    margin: 16,
+    borderRadius: 10,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#fff",
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#555',
-    color: '#ffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
     marginBottom: 12,
-    padding: 10,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)'
-  }
+    borderColor: "#6FB3B8",
+    borderWidth: 1,
+    padding: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    color: "#ffff",
+    fontSize: 16,
+  },
+  btlogin: {
+    backgroundColor: "#E4572E",
+    padding: 8,
+    marginBottom: 12,
+  },
+  logtext: {
+    color: "#ffff",
+    fontSize: 16,
+    fontWeight: 600,
+    textAlign: "center",
+  },
+  cad: {
+    fontSize: 16,
+    textAlign: "center",
+    color: "#6FB3B8",
+    fontWeight: 600,
+  },
 });
