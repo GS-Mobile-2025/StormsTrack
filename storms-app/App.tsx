@@ -5,6 +5,8 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import SensorDetailsScreen from './screens/SensorDetailsScreen';
+import SensorFormScreen from './screens/SensorFormScreen';
+import AlertFormScreen from './screens/AlertFormScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -13,10 +15,12 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SensorDetails" component={SensorDetailsScreen} />
+        <Stack.Screen name="SensorForm" component={SensorFormScreen} />
+        <Stack.Screen name="AlertForm" component={AlertFormScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
