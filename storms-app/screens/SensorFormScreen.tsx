@@ -1,87 +1,78 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Switch, Button, StyleSheet, Alert as RNAlert } from 'react-native';
-import { RouteProp, useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../types';
+import React, { useState } from 'react';
+import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList, Sensor } from '../types/index';
 import { API_URL } from '../types/config';
 
-type Props = {
-  route: RouteProp<RootStackParamList, 'SensorForm'>;
-};
+type Props = NativeStackScreenProps<RootStackParamList, 'SensorForm'>;
 
-export default function SensorFormScreen({ route }: Props) {
+export default function SensorForm({ route, navigation }: Props) {
   const { token, sensor } = route.params;
-  const navigation = useNavigation();
+  const isEdit = !!sensor;
 
+  const [name, setName] = useState(sensor?.name || '');
   const [location, setLocation] = useState(sensor?.location || '');
-  const [temperature, setTemperature] = useState(sensor?.temperature?.toString() || '');
   const [active, setActive] = useState(sensor?.active || false);
-  const isEdit = !!sensor?.id;
 
   const handleSubmit = async () => {
-    if (!location || !temperature) {
-      return RNAlert.alert('Erro', 'Preencha todos os campos');
-    }
-
-    const body = {
-      location,
-      temperature: parseFloat(temperature),
-      active
-    };
+    const url = `${API_URL}/sensors${isEdit ? `/${sensor?.id}` : ''}`;
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(`${API_URL}/sensors${isEdit ? `/${sensor.id}` : ''}`, {
-        method: isEdit ? 'PUT' : 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ name, location, active }),
       });
 
       if (!response.ok) throw new Error('Erro ao salvar sensor');
-
-      RNAlert.alert('Sucesso', `Sensor ${isEdit ? 'atualizado' : 'criado'} com sucesso`);
+      Alert.alert('Sucesso', `Sensor ${isEdit ? 'atualizado' : 'criado'} com sucesso!`);
       navigation.goBack();
-    } catch (error) {
-      RNAlert.alert('Erro', 'Não foi possível salvar o sensor');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{isEdit ? 'Editar Sensor' : 'Novo Sensor'}</Text>
-
-      <Text style={styles.label}>Localização</Text>
-      <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-
-      <Text style={styles.label}>Temperatura</Text>
-      <TextInput style={styles.input} keyboardType="numeric" value={temperature} onChangeText={setTemperature} />
-
-      <View style={styles.switchContainer}>
-        <Text style={styles.label}>Ativo</Text>
-        <Switch value={active} onValueChange={setActive} />
+      <TextInput
+        placeholder="Nome"
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+        placeholderTextColor="#aaa"
+      />
+      <TextInput
+        placeholder="Localização"
+        value={location}
+        onChangeText={setLocation}
+        style={styles.input}
+        placeholderTextColor="#aaa"
+      />
+      <Button
+        title={active ? 'Desativar Sensor' : 'Ativar Sensor'}
+        onPress={() => setActive(!active)}
+        color={active ? '#ff4d4d' : '#1db954'}
+      />
+      <View style={{ marginTop: 16 }}>
+        <Button title={isEdit ? 'Atualizar' : 'Cadastrar'} onPress={handleSubmit} color="#5555ff" />
       </View>
-
-      <Button title="Salvar" onPress={handleSubmit} color="#1db954" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1db954', marginBottom: 20 },
-  label: { fontSize: 16, color: '#fff', marginTop: 16 },
+  container: { flex: 1, backgroundColor: '#000', padding: 16 },
   input: {
-    backgroundColor: '#1c1c1c',
+    borderWidth: 1,
+    borderColor: '#555',
+    backgroundColor: '#222',
     color: '#fff',
-    borderRadius: 8,
+    marginBottom: 12,
     padding: 10,
-    marginTop: 6,
+    borderRadius: 6,
   },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 20,
-  }
 });
