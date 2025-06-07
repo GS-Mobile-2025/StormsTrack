@@ -1,76 +1,70 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert as RNAlert, StyleSheet } from 'react-native';
-import { RouteProp, useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../types';
+import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList, AlertData } from '../types';
 import { API_URL } from '../types/config';
 
-type Props = {
-  route: RouteProp<RootStackParamList, 'AlertForm'>;
-};
+type Props = NativeStackScreenProps<RootStackParamList, 'AlertForm'>;
 
-export default function AlertFormScreen({ route }: Props) {
+export default function AlertForm({ route, navigation }: Props) {
   const { token, alert } = route.params;
-  const navigation = useNavigation();
+  const isEdit = !!alert;
 
   const [location, setLocation] = useState(alert?.location || '');
   const [message, setMessage] = useState(alert?.message || '');
-  const isEdit = !!alert?.id;
 
   const handleSubmit = async () => {
-    if (!location || !message) {
-      return RNAlert.alert('Erro', 'Preencha todos os campos');
-    }
-
-    const body = { location, message };
+    const url = `${API_URL}/alerts${isEdit ? `/${alert?.id}` : ''}`;
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(`${API_URL}/alerts${isEdit ? `/${alert.id}` : ''}`, {
-        method: isEdit ? 'PUT' : 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ location, message }),
       });
 
       if (!response.ok) throw new Error('Erro ao salvar alerta');
-
-      RNAlert.alert('Sucesso', `Alerta ${isEdit ? 'atualizado' : 'criado'} com sucesso`);
+      Alert.alert('Sucesso', `Alerta ${isEdit ? 'atualizado' : 'criado'} com sucesso!`);
       navigation.goBack();
-    } catch (error) {
-      RNAlert.alert('Erro', 'Não foi possível salvar o alerta');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{isEdit ? 'Editar Alerta' : 'Novo Alerta'}</Text>
-
-      <Text style={styles.label}>Localização</Text>
-      <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-
-      <Text style={styles.label}>Mensagem</Text>
       <TextInput
-        style={[styles.input, { height: 100 }]}
+        placeholder="Localização"
+        value={location}
+        onChangeText={setLocation}
+        style={styles.input}
+        placeholderTextColor="#aaa"
+      />
+      <TextInput
+        placeholder="Mensagem do Alerta"
         value={message}
         onChangeText={setMessage}
-        multiline
+        style={styles.input}
+        placeholderTextColor="#aaa"
       />
-
-      <Button title="Salvar" onPress={handleSubmit} color="#ff6347" />
+      <Button title={isEdit ? 'Atualizar Alerta' : 'Criar Alerta'} onPress={handleSubmit} color="#5555ff" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#ff6347', marginBottom: 20 },
-  label: { fontSize: 16, color: '#fff', marginTop: 16 },
+  container: { flex: 1, backgroundColor: '#000', padding: 16 },
   input: {
-    backgroundColor: '#1c1c1c',
+    borderWidth: 1,
+    borderColor: '#555',
+    backgroundColor: '#222',
     color: '#fff',
-    borderRadius: 8,
+    marginBottom: 12,
     padding: 10,
-    marginTop: 6,
+    borderRadius: 6,
   },
 });
