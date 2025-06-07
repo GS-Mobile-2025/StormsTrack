@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import {
-  View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   KeyboardAvoidingView,
@@ -81,7 +79,7 @@ export default function RegisterScreen({ navigation }: Props) {
           onChangeText={setLocation}
         />
         <TouchableOpacity style={styles.button} onPress={handleRegister} >
-          <Text style={styles.textbutt}>Cadastrar</Text>
+          <Text onPress={() => navigation.goBack()} style={styles.textbutt}>Cadastrar</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.linkback}>Voltar</Text>
