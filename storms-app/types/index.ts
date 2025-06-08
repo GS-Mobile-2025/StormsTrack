@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Register: undefined;
   SensorForm: { token: string; sensor?: Sensor };
   AlertForm: { token: string; alert?: AlertData };
+  AlertScreen: { token: string }; 
 };
 
 export interface Sensor {
