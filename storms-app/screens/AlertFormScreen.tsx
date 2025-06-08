@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, AlertData } from '../types';
 import { API_URL } from '../types/config';
@@ -51,7 +51,10 @@ export default function AlertForm({ route, navigation }: Props) {
         style={styles.input}
         placeholderTextColor="#aaa"
       />
-      <Button title={isEdit ? 'Atualizar Alerta' : 'Criar Alerta'} onPress={handleSubmit} color="#5555ff" />
+      <Button title={isEdit ? 'Atualizar Alerta' : 'Criar Alerta'} onPress={handleSubmit} color="#1db954" />
+      <TouchableOpacity style={styles.btback} onPress={() => navigation.goBack()}
+        > Voltar
+        </TouchableOpacity>
     </View>
   );
 }
@@ -67,4 +70,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 6,
   },
+  btback: {
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 16,
+    fontSize: 16,
+  }
 });
