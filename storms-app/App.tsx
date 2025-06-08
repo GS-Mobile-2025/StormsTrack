@@ -6,6 +6,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import SensorFormScreen from './screens/SensorFormScreen';
 import AlertFormScreen from './screens/AlertFormScreen';
+import AlertScreen from './screens/AlertScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -19,6 +20,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SensorForm" component={SensorFormScreen} />
         <Stack.Screen name="AlertForm" component={AlertFormScreen} />
+        <Stack.Screen name="AlertScreen" component={AlertScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
