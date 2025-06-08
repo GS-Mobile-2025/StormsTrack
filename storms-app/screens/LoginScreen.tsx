@@ -3,17 +3,17 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   ImageBackground,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList } from '../types/index';
 import { API_URL } from '../types/config';
 
-const backgroundImg = require('../assets/background-login.jpg');
+const backgroundImg = require('../assets/background-login.png');
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -25,7 +25,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert('Campos obrigatórios', 'Preencha usuário e senha');
+      Alert.alert('Erro', 'Preencha todos os campos!');
       return;
     }
 
@@ -33,86 +33,107 @@ export default function LoginScreen({ navigation }: Props) {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          email: username,
+          password: password
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Usuário ou senha inválidos');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao fazer login');
       }
 
       const data = await response.json();
+      const token = data.token;
 
-      if (data.token) {
-        console.log('Login OK - token:', data.token);
-        navigation.navigate('Home', { token: data.token });
-      } else {
-        throw new Error('Token não recebido');
+      if (!token) {
+        throw new Error('Token não recebido!');
       }
+
+      navigation.navigate('Home', { token });
     } catch (error: any) {
-      console.error('Erro no login:', error.message);
-      Alert.alert('Erro no login', error.message);
+      console.log("Erro de login:", error.message);
+      Alert.alert('Erro', error.message || 'Erro desconhecido ao fazer login.');
     }
   };
 
-  const handleRegister = () => {
-    navigation.navigate('Register');
-  };
-
   return (
-    <ImageBackground source={backgroundImg} style={styles.background} resizeMode="cover">
-      <View style={styles.overlay}>
+    <ImageBackground source={backgroundImg} style={styles.background}>
+      <View style={styles.container}>
         <Text style={styles.title}>StormsTrack</Text>
         <TextInput
-          placeholder="Usuário"
-          placeholderTextColor="#aaa"
-          onChangeText={setUsername}
+          placeholder="Email"
           style={styles.input}
+          value={username}
+          onChangeText={setUsername}
         />
         <TextInput
           placeholder="Senha"
-          placeholderTextColor="#aaa"
-          onChangeText={setPassword}
           secureTextEntry
           style={styles.input}
+          value={password}
+          onChangeText={setPassword}
         />
-        <Button title="Entrar" onPress={handleLogin} color="#D2691E" />
-        <View style={{ marginTop: 10 }}>
-          <TouchableOpacity style={styles.cad} onPress={handleRegister}>Não tem conta? Cadastre-se aqui!</TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.btlogin} onPress={handleLogin}>
+          <Text style={styles.logtext}>Entrar</Text>
+        </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => navigation.navigate('Register')}>
+          <View>
+            <Text style={styles.cad}>Não tem conta? Cadastre-se aqui!</Text>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, justifyContent: 'center' },
-  overlay: {
+  background: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    resizeMode: 'cover',
     justifyContent: 'center',
-    padding: 20,
+  },
+  container: {
+    padding: 24,
+    margin: 16,
+    borderRadius: 10,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
+    fontSize: 24,
     marginBottom: 24,
+    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#4682B4",
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#555',
-    color: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
     marginBottom: 12,
-    padding: 10,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: "#6FB3B8",
+    borderWidth: 1,
+    padding: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    color: "#fff",
+  },
+  btlogin: {
+    backgroundColor: '#7B68EE',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  logtext: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
   cad: {
-    color: '#87CEFA',
-    textAlign: 'center',
-    fontSize: 15,
-    marginTop: 10,
-    fontWeight: 500,
+    marginTop: 12,
+    color: "#4682B4",
+    textAlign: 'center'
   }
 });
