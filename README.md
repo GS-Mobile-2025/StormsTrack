@@ -4,6 +4,9 @@ StormsTrack é uma solução IoT voltada ao **monitoramento de calor extremo em 
 
 ---
 
+## Link Pitch
+https://youtu.be/1e_J9VqyGOQ
+
 ## 🔍 Descrição do Projeto
 
 StormsTrack tem como objetivo:
