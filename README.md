@@ -55,4 +55,11 @@ npm install
 # Rode o app com Expo
 npx expo start
 ```
-### 
+### 2. Rode o Java
+```url
+https://github.com/FelipeSants08/stormtrack.git
+```
+```bash
+# No terminal da IDE
+mvn spring-boot:run
+```
